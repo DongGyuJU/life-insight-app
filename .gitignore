@@ -26,20 +26,21 @@ DerivedData
 #
 build/
 .idea
-.gradle
+**/.gradle/
 local.properties
 *.iml
 *.hprof
 .cxx/
 *.keystore
+*.jks
+*.p12
+*.pfx
 !debug.keystore
 .kotlin/
 
 # node.js
 #
 node_modules/
-npm-debug.log
-yarn-error.log
 
 # fastlane
 #
@@ -73,3 +74,26 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# --- 커스텀 보안 파일 추가 ---
+.env
+.env.local
+.env.*
+
+# IDE / 에디터 임시 파일
+.vscode/
+*.swp
+*.swo
+*~
+
+# React Native / 플랫폼 빌드 출력
+android/app/build/
+ios/build/
+ios/Pods/
+android/.gradle/
+*.xcworkspace
+
+# 로그
+*.log
+*.orig
+pnpm-debug.log*
