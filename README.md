@@ -27,3 +27,27 @@ src/
 ├── database/       # 로컬 DB 연결 및 스키마 정의 (db.ts)
 ├── screens/        # 메인 탭 화면 (Home, Category, Calendar, Report, Settings)
 └── services/       # 비즈니스 로직 및 외부 API 통신 (api.ts, pdf.ts, settings.ts)
+```
+
+
+## 🗄 데이터베이스 설계 (Database Schema)
+* 로컬 일상 로그 데이터를 체계적으로 관리하기 위해 SQLite 단일 테이블에 다각화된 컬럼 구조를 설계했습니다.
+
+* 기본 정보: id, text, categories, sub_category, emotion, created_at
+
+* 자산 및 일정: amount, appointment_date, summary, reviewed
+
+* 운동 및 업무: exercise_type, exercise_minutes, exercise_calories, work_partner, work_priority, work_status
+
+* 할 일 기능: is_todo, due_date
+
+🚀 실행 방법 (How to run)
+
+# 1. 패키지 설치
+npm install
+
+# 2. iOS 환경 세팅 (Mac 전용)
+cd ios && pod install && cd ..
+
+# 3. 앱 실행
+npm run ios
