@@ -14,7 +14,7 @@ import {
 import {useFocusEffect} from '@react-navigation/native';
 import {getAllEntries, markAsReviewed, saveEntry, deleteEntry} from '../database/db';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import {analyzeText, analyzeImage, parseRelativeDate, parseAppointmentLocation, parseAppointmentPartner, buildAppointmentDateTime, calcCalories, isWorkKeyword, isAppointmentKeyword} from '../services/api';
+import {analyzeText, analyzeImage, parseRelativeDate, parseAppointmentLocation, parseAppointmentPartner, buildAppointmentDateTime, calcCalories, isWorkKeyword, isAppointmentKeyword, parseTimeText} from '../services/api';
 import {loadSettings} from '../services/settings';
 import {Swipeable} from 'react-native-gesture-handler';
 import {useSettings} from '../services/SettingsContext';
@@ -289,7 +289,11 @@ export default function HomeScreen() {
       : null;
 
     const dueDate = isWork
-      ? (result.is_todo === 1 ? null : (parseRelativeDate(text) || result.due_date || null))
+      ? (result.is_todo === 1 ? null : (parseRelativeDate(text) 
+        ? (parseTimeText(text) 
+          ? `${parseRelativeDate(text)} ${parseTimeText(text)}` 
+          : parseRelativeDate(text))
+        : result.due_date || null))
       : null;
 
     const location = (isAppointment || isWork)

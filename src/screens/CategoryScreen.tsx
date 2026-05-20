@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Modal,
 } from 'react-native';
+import {formatMonthDayTime} from '../services/api';
 import {useFocusEffect} from '@react-navigation/native';
 import EditModal from '../components/EditModal';
 import {updateEntry, deleteEntry} from '../database/db';
@@ -199,15 +200,8 @@ export default function CategoryScreen() {
     if (entry.work_partner) labels.push(`👤 ${entry.work_partner}`);
     if (entry.location) labels.push(`📍 ${entry.location}`);
     if (entry.appointment_date) {
-      const normalizedDate = entry.appointment_date.replace(' ', 'T');
-      const date = new Date(normalizedDate);
-      if (!Number.isNaN(date.getTime())) {
-        const dateLabel = `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-        const timeLabel = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-        labels.push(`🕒 ${dateLabel} ${timeLabel}`);
-      } else {
-        labels.push(`🕒 ${entry.appointment_date}`);
-      }
+      const formatted = formatMonthDayTime(entry.appointment_date);
+      labels.push(`🕒 ${formatted || entry.appointment_date}`);
     }
     return labels;
   };
@@ -391,7 +385,7 @@ export default function CategoryScreen() {
                 <Text style={styles.modalEmoji}>📅</Text>
                 <View>
                   <Text style={styles.modalDate}>
-                    {selectedAppointment?.appointment_date || selectedAppointment?.created_at?.slice(0,10)}
+                    {formatMonthDayTime(selectedAppointment?.appointment_date) || selectedAppointment?.created_at?.slice(0,10)}
                   </Text>
                   {selectedAppointment?.location && (
                     <Text style={styles.appointmentMetaText}>{selectedAppointment.location}</Text>
@@ -490,7 +484,7 @@ export default function CategoryScreen() {
                   {selectedWork?.due_date && (
                     <View style={styles.workDetailRow}>
                       <Text style={styles.workDetailLabel}>날짜</Text>
-                      <Text style={styles.workDetailValue}>{selectedWork.due_date}</Text>
+                      <Text style={styles.workDetailValue}>{formatMonthDayTime(selectedWork.due_date) || selectedWork.due_date}</Text>
                     </View>
                   )}
                   {selectedWork?.work_priority && (
@@ -709,7 +703,7 @@ export default function CategoryScreen() {
                         <View style={styles.appointmentMetaRow}>
                           {entry.appointment_date && (
                             <Text style={styles.appointmentMetaText} numberOfLines={1}>
-                              🕒 {entry.appointment_date}
+                              🕒 {formatMonthDayTime(entry.appointment_date) || entry.appointment_date}
                             </Text>
                           )}
                           {entry.work_partner && (
@@ -809,7 +803,7 @@ export default function CategoryScreen() {
                               {entry.work_partner && (
                                 <Text style={styles.workPartner}>@ {entry.work_partner}</Text>
                               )}
-                              <Text style={styles.workDate}>{entry.due_date}</Text>
+                              <Text style={styles.workDate}>{formatMonthDayTime(entry.due_date) || entry.due_date}</Text>
                             </View>
                           </TouchableOpacity>
                         </Swipeable>

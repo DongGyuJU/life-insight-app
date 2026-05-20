@@ -59,14 +59,41 @@ export default function CalendarScreen() {
   };
 
   // 날짜별 기록 그룹핑
+  // const entriesByDate: Record<string, any[]> = {};
+  // entries.forEach(entry => {
+  //   try {
+  //     const cats = JSON.parse(entry.categories || '[]');
+  //     const isAppointment = cats.includes('appointment');
+  //     const date = isAppointment && entry.appointment_date
+  //       ? entry.appointment_date.slice(0, 10)  
+  //       : entry.created_at?.slice(0, 10);
+  //     if (date) {
+  //       if (!entriesByDate[date]) entriesByDate[date] = [];
+  //       entriesByDate[date].push(entry);
+  //     }
+  //   } catch {
+  //     const date = entry.created_at?.slice(0, 10);
+  //     if (date) {
+  //       if (!entriesByDate[date]) entriesByDate[date] = [];
+  //       entriesByDate[date].push(entry);
+  //     }
+  //   }
+  // });
   const entriesByDate: Record<string, any[]> = {};
   entries.forEach(entry => {
     try {
       const cats = JSON.parse(entry.categories || '[]');
       const isAppointment = cats.includes('appointment');
-      const date = isAppointment && entry.appointment_date
-        ? entry.appointment_date
-        : entry.created_at?.slice(0, 10);
+      const isWork = cats.includes('work');
+      let date;
+      if (isAppointment && entry.appointment_date) {
+        date = entry.appointment_date.slice(0, 10);
+      } else if (isWork && entry.due_date) {
+        date = entry.due_date.slice(0, 10);
+      } else {
+        date = entry.created_at?.slice(0, 10);
+      }
+
       if (date) {
         if (!entriesByDate[date]) entriesByDate[date] = [];
         entriesByDate[date].push(entry);
@@ -88,6 +115,11 @@ export default function CalendarScreen() {
       try { return JSON.parse(e.categories || '[]').includes('expense'); }
       catch { return false; }
     });
+    const hasWork = dayEntries.some(e => {
+      try { return JSON.parse(e.categories || '[]').includes('work'); }
+      catch { return false; }
+    });
+  
     const hasAppointment = dayEntries.some(e => {
       try { return JSON.parse(e.categories || '[]').includes('appointment'); }
       catch { return false; }
@@ -96,7 +128,7 @@ export default function CalendarScreen() {
       try { return JSON.parse(e.categories || '[]').includes('emotion'); }
       catch { return false; }
     });
-    return {hasExpense, hasAppointment, hasEmotion, hasAny: dayEntries.length > 0};
+    return {hasExpense, hasAppointment, hasEmotion, hasWork, hasAny: dayEntries.length > 0};
   };
 
   const getEmotionEmoji = (emotion: string) => {
@@ -172,6 +204,9 @@ export default function CalendarScreen() {
                     {dots.hasEmotion && (
                       <View style={[styles.dot, {backgroundColor: '#3B6D11'}]} />
                     )}
+                    {dots.hasWork && (
+                      <View style={[styles.dot, {backgroundColor: '#6B46C1'}]} />
+                    )}
                   </View>
                 )}
               </TouchableOpacity>
@@ -193,6 +228,10 @@ export default function CalendarScreen() {
         <View style={styles.legendItem}>
           <View style={[styles.dot, {backgroundColor: '#3B6D11'}]} />
           <Text style={styles.legendText}>감정</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.dot, {backgroundColor: '#6B46C1'}]} />
+          <Text style={styles.legendText}>업무</Text>
         </View>
       </View>
 
