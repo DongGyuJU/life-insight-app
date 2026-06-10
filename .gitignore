@@ -105,3 +105,5 @@ ml/__pycache__/
 ml/model_gguf/
 ml/model_gguf_gguf/
 ml/outputs/
+*.gguf
+*.bak
