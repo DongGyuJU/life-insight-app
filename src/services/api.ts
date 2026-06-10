@@ -1,41 +1,6 @@
 // const SERVER_URL = 'http://100.100.103.1:3000';
-const SERVER_URL = 'https://life-insight-backend.onrender.com';
+const SERVER_URL = 'http://100.100.103.1:3000';
 
-// export const analyzeText = async (text: string) => {
-//   try {
-//     const controller = new AbortController();
-//     const timeout = setTimeout(() => controller.abort(), 60000);
-
-//     const response = await fetch(`${SERVER_URL}/analyze`, {
-//       method: 'POST',
-//       headers: {'Content-Type': 'application/json'},
-//       body: JSON.stringify({text}),
-//       signal: controller.signal,
-//     });
-//     clearTimeout(timeout);
-//     const raw = await response.text(); // json() 대신 text()로 먼저 받기
-    
-//     // JSON 파싱 시도
-//     const cleaned = raw.replace(/```json|```/g, '').trim();
-//     const parsed = JSON.parse(cleaned);
-    
-//     // 배열이면 첫 번째, 아니면 그대로
-//     const data = Array.isArray(parsed) ? parsed[0] : parsed;
-    
-//     // 카테고리 정규화
-//     if (data && data.categories) {
-//       data.categories = normalizeCategories(data.categories);
-//     }
-
-//     // 필수 필드 검증
-//     if (!data || !data.categories) return null;
-    
-//     return data;
-//   } catch (error) {
-//     console.error('분석 실패:', error);
-//     return null;
-//   }
-// };
 
 export const analyzeText = async (text: string) => {
   try {
@@ -101,6 +66,7 @@ export const generateReport = async (data: {
   positiveCount: number;
   negativeCount: number;
   appointmentCount: number;
+  insightHint?: string; // 👈 새로 추가된 랭킹 힌트 파라미터 (선택 사항)
 }) => {
   try {
     const controller = new AbortController();
@@ -109,7 +75,8 @@ export const generateReport = async (data: {
     const response = await fetch(`${SERVER_URL}/report`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data),
+      // 👇 JSON.stringify(data) 덕분에 insightHint도 자동으로 서버로 전송됩니다!
+      body: JSON.stringify(data), 
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -233,6 +200,23 @@ export const parseTimeText = (text: string): string | null => {
 export const parseAppointmentLocation = (text: string): string | null => {
   const match = text.match(/([가-힣0-9\s]{2,30}?)(?=에서|에|으로|로)/);
   return match ? match[1].trim() : null;
+};
+
+export const parseAppointmentPartner = (text: string): string | null => {
+  const normalized = text.replace(/\u00A0/g, ' ').trim();
+  const partnerPatterns = [
+    /([가-힣]{2,20})(?:님)?\s*(?:와|과|랑|이랑|에게|한테|와 함께|과 함께|랑 함께|이랑 함께)/,
+    /(?:와|과|랑|이랑|에게|한테|와 함께|과 함께|랑 함께|이랑 함께)\s*([가-힣]{2,20})/,
+  ];
+
+  for (const pattern of partnerPatterns) {
+    const match = normalized.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
 };
 
 export const formatDateTime = (value: string | null | undefined): string | null => {
@@ -366,4 +350,29 @@ export const isAppointmentKeyword = (text: string): boolean => {
   // 약속 관련 키워드: 약속, 만남 (단, 미팅/회의/마감 등은 제외)
   if (/미팅|회의|마감|보고|발표/.test(normalized)) return false;
   return /약속|만남/.test(normalized);
+};
+
+// 💡 [추가] 이번 달 지출 내역을 기반으로 AI 피드백 가져오기
+export const getAiExpenseFeedback = async (expenseSummaryText: string) => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    // 💡 주소를 /expense-feedback 으로 전용선 변경!
+    const response = await fetch(`${SERVER_URL}/expense-feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expenseData: expenseSummaryText }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+    
+    // 백엔드에서 { "feedback": "..." } 형태로 이쁘게 줄 예정입니다.
+    const data = await response.json();
+    return data?.feedback || "이번 달 소비를 분석 중입니다.";
+  } catch (error) {
+    console.error('AI 지출 피드백 실패:', error);
+    return "소비 데이터를 읽는 데 실패했어요.";
+  }
 };

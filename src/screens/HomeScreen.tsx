@@ -1,4 +1,4 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,21 @@ import {
   Platform,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
-import {getAllEntries, markAsReviewed, saveEntry, deleteEntry} from '../database/db';
+import {getAllEntries, saveEntry, deleteEntry} from '../database/db';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {analyzeText, analyzeImage, parseRelativeDate, parseAppointmentLocation, parseAppointmentPartner, buildAppointmentDateTime, calcCalories, isWorkKeyword, isAppointmentKeyword, parseTimeText} from '../services/api';
 import {loadSettings} from '../services/settings';
 import {Swipeable} from 'react-native-gesture-handler';
 import {useSettings} from '../services/SettingsContext';
+import GradientHeader from '../components/GradientHeader';
+import { loadAIEngine, analyzeLifeLog } from '../services/AIManager'; 
+import ReactNativeHapticFeedback from "react-native-haptic-feedback";
+import { syncPendingEntries } from '../services/syncService';
+import { ScrollView as HScrollView } from 'react-native'; 
+import { getCurrentUserId } from '../services/syncService';
+import LivarsSection from '../components/LivarsSection';
+
+const hapticOptions = { enableVibrateFallback: true, ignoreAndroidSystemSettings: false };
 
 export default function HomeScreen() {
   const {colors, fontSize} = useSettings();
@@ -30,12 +39,12 @@ export default function HomeScreen() {
   const [result, setResult] = useState<any>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   
-  const handleDeleteEntry = async (entry) => {
+  const handleDeleteEntry = async (entry: any) => {
     await deleteEntry(entry.id);
     loadData(); // 삭제 후 목록 다시 불러오기
   };
 
-  const renderSwipeActions = (entry) => {
+  const renderSwipeActions = (entry: any) => {
     return (
       // 터치(TouchableOpacity)가 아니라 그냥 View로 바꿉니다. (밀면 바로 삭제되니까요!)
       <View style={styles.deleteAction}>
@@ -61,6 +70,31 @@ export default function HomeScreen() {
       loadData();
     }, []),
   );
+  const [settings, setSettings] = useState<any>({ wakeTime: '07:00' });
+
+  useEffect(() => {
+    loadSettings().then(setSettings);
+  }, []);
+  const [optimalCoffeeTime, setOptimalCoffeeTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    // 기상 시간 기반 최적 커피 시간 로컬 계산
+    const calcCoffeeTime = async () => {
+      const s = await loadSettings();
+      const wakeTime = s.wakeTime || '07:00';
+      const [h, m] = wakeTime.split(':').map(Number);
+      const optimalMin = h * 60 + m + 120; // 기상 후 2시간
+      const oh = Math.floor(optimalMin / 60) % 24;
+      const om = optimalMin % 60;
+      setOptimalCoffeeTime(
+        `${String(oh).padStart(2, '0')}:${String(om).padStart(2, '0')}`
+      );
+    };
+    calcCoffeeTime();
+  }, []);
+  useEffect(() => {
+  loadAIEngine();
+}, []);
   const getGreeting = () => {
     const hour = new Date().getHours();
     const hasAppointment = entries.some(e => {
@@ -152,167 +186,66 @@ export default function HomeScreen() {
   };
   const handleSubmit = async () => {
     if (!text.trim()) {
+      // ❌ 에러 발생 시 경고 진동 (드르륵!)
+      ReactNativeHapticFeedback.trigger("notificationError", hapticOptions);
       Alert.alert('입력 오류', '내용을 입력해주세요.');
       return;
     }
+    
+    // 👇 1. 버튼 누른 직후 가벼운 진동 (톡!)
+    ReactNativeHapticFeedback.trigger("impactLight", hapticOptions); 
     setLoading(true);
+    
     try {
-      const analysis = await analyzeText(text);
+      const analysis = await analyzeLifeLog(text) ?? await analyzeText(text); 
+      
       if (analysis) {
+        // 👇 2. AI 분석 성공 시 기분 좋은 진동 (뾰로롱!)
+        ReactNativeHapticFeedback.trigger("notificationSuccess", hapticOptions); 
         setResult(analysis);
       } else {
-        await saveEntry({text});
-        Alert.alert('저장 완료', '서버 연결 없이 저장됐어요.');
+        await saveEntry({
+          text,
+          categories: JSON.stringify(['diary']), 
+          reviewed: 0, 
+        });
+        Alert.alert('저장 완료', 'AI 분석에 실패하여 기본 일기로 저장됐어요.');
         setText('');
         loadData();
       }
     } catch (error) {
+      ReactNativeHapticFeedback.trigger("notificationError", hapticOptions); // 에러 진동
       Alert.alert('오류', '저장 중 문제가 발생했어요.');
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
+
   
-  // AI 판단 + 규칙 기반 보정
-  // const handleConfirm = async () => {
-  //   if (!result) return;
-
-  //   const resultCategories = normalizeCategories(result.categories);
-  //   const isDiary = resultCategories.includes('diary');
-  //   const isWork = resultCategories.includes('work');
-  //   const isAppointment = resultCategories.includes('appointment');
-  //   const isExercise = resultCategories.includes('exercise');
-
-  //   const appointmentDate = isAppointment
-  //     ? buildAppointmentDateTime(text, result.appointment_date)
-  //     : null;
-
-  //   // const dueDate = isWork
-  //   //   ? (result.is_todo === 1 ? null : (parseRelativeDate(text) || result.due_date || null))
-  //   //   : null;
-  //   const dueDate = (isWork || isWorkKeyword(text))
-  //     ? (result.is_todo === 1 ? null : (parseRelativeDate(text) || result.due_date || null))
-  //     : null;
-
-  //   const location = (isAppointment || isWork)
-  //     ? (result.location || parseAppointmentLocation(text) || '')
-  //     : result.location;
-
-  //   const workPartner = (isAppointment || isWork || isWorkKeyword(text))
-  //     ? (result.work_partner || parseAppointmentPartner(text) || null)
-  //     : result.work_partner;
-
-  //   let categories = [...resultCategories];
-
-  //   // 미팅/회의 키워드면 work로 강제 교정
-  //   if (isWorkKeyword(text) && !categories.includes('work')) {
-  //     categories = categories.filter(c => c !== 'appointment');
-  //     categories.push('work');
-  //   }
-  //   if (categories.length === 0) {
-  //     if (result.amount) {
-  //       categories.push('expense');
-  //     } else if (isWorkKeyword(text)) {
-  //     // 업무 키워드 우선: 미팅, 회의, 마감, 보고, 발표 등
-  //     categories.push('work');
-  //     } else if (isAppointmentKeyword(text)) {
-  //     // 약속 키워드: 약속, 만남
-  //     categories.push('appointment');
-  //     } else if (result.exercise_type) {
-  //       categories.push('exercise');
-  //     } else if (appointmentDate && (result.location || result.work_partner)) {
-  //       // 날짜 + 위치/사람 = 약속
-  //       categories.push('appointment');
-  //     } else if (dueDate && (result.is_todo === 1 || result.work_partner)) {
-  //       // 마감일 + (할일 또는 담당자) = 업무
-  //       categories.push('work');
-  //     } else if (result.is_todo === 1) {
-  //       categories.push('work');
-  //     } else if (dueDate) {
-  //       categories.push('work');
-  //     } else {
-  //       categories.push('diary');
-  //     }
-  //   }
-  //   const subCategory = isAppointment
-  //     ? ''
-  //     : result.sub_category || (categories.includes('diary') ? inferDiarySubCategory(text) : '');
-
-  //   let calories: number | undefined;
-  //   if (isExercise && result.exercise_type && result.exercise_minutes) {
-  //     const settings = await loadSettings();
-  //     calories = calcCalories(
-  //       result.exercise_type,
-  //       result.exercise_minutes,
-  //       settings.bodyWeight,
-  //     );
-  //   }
-
-  //   await saveEntry({
-  //     text,
-  //     categories: JSON.stringify(categories),
-  //     sub_category: subCategory,
-  //     amount: result.amount,
-  //     appointment_date: appointmentDate || undefined,
-  //     location,
-  //     summary: result.summary,
-  //     exercise_type: result.exercise_type,
-  //     exercise_minutes: result.exercise_minutes,
-  //     exercise_calories: calories,
-  //     work_partner: workPartner || undefined,
-  //     work_priority: result.work_priority || '보통',
-  //     work_status: '예정',
-  //     is_todo: result.is_todo || 0,
-  //     due_date: dueDate,
-  //     reviewed: 1,
-  //   });
-
-  //   Alert.alert('저장 완료', calories
-  //     ? `기록 저장! 소모 칼로리: ${calories}kcal 🔥`
-  //     : '기록이 저장됐어요!');
-  //   setText('');
-  //   setResult(null);
-  //   loadData();
-  // };
-
   // AI 판단 결과에 맡김
   const handleConfirm = async () => {
     if (!result) return;
+    ReactNativeHapticFeedback.trigger("impactMedium", hapticOptions);
 
+    // 1. AI가 준 카테고리를 배열로 확실하게 파싱
     const resultCategories = normalizeCategories(result.categories);
-    const isWork = resultCategories.includes('work');
+    if (resultCategories.length === 0) {
+      resultCategories.push('diary'); // 분류 실패 시 기본값
+    }
+
     const isAppointment = resultCategories.includes('appointment');
     const isExercise = resultCategories.includes('exercise');
 
-    const appointmentDate = isAppointment
-      ? buildAppointmentDateTime(text, result.appointment_date)
-      : null;
+    // 2. 과거의 복잡한 정규식(parseRelativeDate 등)은 모두 삭제! AI의 결과를 그대로 믿습니다.
+    const appointmentDate = isAppointment ? result.appointment_date : null;
+    const location = result.location || '';
+    const workPartner = result.work_partner || '';
 
-    const dueDate = isWork
-      ? (result.is_todo === 1 ? null : (parseRelativeDate(text) 
-        ? (parseTimeText(text) 
-          ? `${parseRelativeDate(text)} ${parseTimeText(text)}` 
-          : parseRelativeDate(text))
-        : result.due_date || null))
-      : null;
-
-    const location = (isAppointment || isWork)
-      ? (result.location || parseAppointmentLocation(text) || '')
-      : result.location;
-
-    const workPartner = (isAppointment || isWork)
-      ? (result.work_partner || parseAppointmentPartner(text) || null)
-      : result.work_partner;
-
-    // AI 판단 그대로 사용
-    let categories = [...resultCategories];
-    if (categories.length === 0) {
-      categories.push('diary');
-    }
-
+    // 3. 일기인 경우에만 감정 이모지 추론
     const subCategory = isAppointment
       ? ''
-      : result.sub_category || (categories.includes('diary') ? inferDiarySubCategory(text) : '');
+      : result.sub_category || (resultCategories.includes('diary') ? inferDiarySubCategory(text) : '');
 
     let calories: number | undefined;
     if (isExercise && result.exercise_type && result.exercise_minutes) {
@@ -324,31 +257,40 @@ export default function HomeScreen() {
       );
     }
 
-    await saveEntry({
-      text,
-      categories: JSON.stringify(categories),
-      sub_category: subCategory,
-      amount: result.amount,
-      appointment_date: appointmentDate || undefined,
-      location,
-      summary: result.summary,
-      exercise_type: result.exercise_type,
-      exercise_minutes: result.exercise_minutes,
-      exercise_calories: calories,
-      work_partner: workPartner || undefined,
-      work_priority: result.work_priority || '보통',
-      work_status: '예정',
-      is_todo: result.is_todo || 0,
-      due_date: dueDate,
-      reviewed: 1,
-    });
+    try {
+      // 4. SQLite DB에 저장 (saveEntry)
+      await saveEntry({
+        text: text,
+        categories: JSON.stringify(resultCategories),
+        sub_category: subCategory,
+        amount: result.amount,
+        appointment_date: appointmentDate || undefined,
+        location: location,
+        summary: result.summary,
+        exercise_type: result.exercise_type,
+        exercise_minutes: result.exercise_minutes,
+        exercise_calories: calories,
+        work_partner: workPartner || undefined,
+        is_todo: result.is_todo || 0,
+        reviewed: 1, // AI 분석 후 사용자가 '확인'을 눌렀으므로 리뷰 완료 처리
+      });
+      syncPendingEntries();
+      ReactNativeHapticFeedback.trigger("notificationSuccess", hapticOptions);
 
-    Alert.alert('저장 완료', calories
-      ? `기록 저장! 소모 칼로리: ${calories}kcal 🔥`
-      : '기록이 저장됐어요!');
-    setText('');
-    setResult(null);
-    loadData();
+      Alert.alert(
+        '저장 완료', 
+        calories ? `기록 저장! 소모 칼로리: ${calories}kcal 🔥` : '기록이 저장됐어요!'
+      );
+      
+      // 5. UI 초기화 및 하단 '최근 기록' 리스트 갱신
+      setText('');
+      setResult(null);
+      loadData(); 
+
+    } catch (error) {
+      console.error("DB 저장 에러:", error);
+      Alert.alert('오류', '데이터베이스 저장 중 문제가 발생했습니다.');
+    }
   };
 
 
@@ -432,17 +374,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.inner}>
 
         {/* 헤더 */}
-        <View style={styles.header}>
-          <Text style={[styles.month, {color: colors.subText, fontSize: fontSize(14)}]}>
-            {new Date().getFullYear()}년 {new Date().getMonth() + 1}월
-          </Text>
-          <Text style={[styles.title, {color: colors.text, fontSize: fontSize(22)}]}>
-            {getGreeting().title}
-          </Text>
-          <Text style={[styles.greetingSub, {color: colors.subText, fontSize: fontSize(14)}]}>
-            {getGreeting().sub}
-          </Text>
-        </View>
+        <GradientHeader title={getGreeting().title} subtitle={getGreeting().sub} noGradient />
 
         {/* 통계 */}
         <View style={styles.statsRow}>
@@ -475,12 +407,13 @@ export default function HomeScreen() {
         {/* 기록 입력창 */}
         <View style={styles.inputSection}>
           <Text style={styles.sectionTitle}>오늘의 기록</Text>
-          <TextInput
+            <TextInput
             style={[styles.input, {
               borderColor: colors.border,
               color: colors.text,
-              backgroundColor: colors.background,
+              backgroundColor: '#FFFFFF',
               fontSize: fontSize(14),
+              borderWidth: 1,
             }]}
             placeholder="지출, 약속, 감정... 무엇이든 기록하세요"
             placeholderTextColor={colors.subText}
@@ -504,9 +437,6 @@ export default function HomeScreen() {
               <Text style={styles.resultText}>
                 카테고리: {result.categories?.join(', ')}
               </Text>
-              {/* {result.emotion && (
-                <Text style={styles.resultText}>감정: {result.emotion}</Text>
-              )} */}
               {result.amount && (
                 <Text style={styles.resultText}>
                   금액: ₩{result.amount.toLocaleString()}
@@ -543,7 +473,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={styles.confirmBtn}
                   onPress={handleConfirm}>
-                  <Text style={styles.confirmText}>✓ 확인</Text>
+                  <Text style={[styles.confirmText, {color: colors.primary}]}>✓ 확인</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.rejectBtn}
@@ -554,13 +484,22 @@ export default function HomeScreen() {
             </View>
           )}
 
+          {/* 👇 개선된 로딩 버튼 */}
           {!result && (
             <TouchableOpacity
-              style={styles.submitBtn}
+              style={[
+                styles.submitBtn, 
+                {backgroundColor: loading ? colors.subText : colors.primary} 
+              ]}
               onPress={handleSubmit}
               disabled={loading}>
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={[styles.submitText, {fontSize: fontSize(15)}]}>
+                    AI 비서가 분석 중입니다... 🧠
+                  </Text>
+                </View>
               ) : (
                 <Text style={[styles.submitText, {fontSize: fontSize(15)}]}>
                   기록하고 분류하기
@@ -570,10 +509,9 @@ export default function HomeScreen() {
           )}
         </View>
 
-
-        {/* 최근 기록 */}
+        {/* 👇 실수로 지워졌던 최근 기록 리스트 복구 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>최근 기록</Text>
+            <Text style={[styles.sectionTitle, {color: colors.subText}]}>최근 기록</Text>
           {entries.length === 0 ? (
             <Text style={styles.emptyText}>
               아직 기록이 없어요. 위에서 시작해보세요!
@@ -583,18 +521,17 @@ export default function HomeScreen() {
               <Swipeable
                 key={entry.id}
                 renderRightActions={() => renderSwipeActions(entry)}
-                rightThreshold={100} // 화면을 100만큼 밀면 오픈 판정!
+                rightThreshold={100} 
                 onSwipeableOpen={async () => {
-                  // 밀림 판정이 나는 순간 자동으로 삭제 실행
                   await handleDeleteEntry(entry);
                 }}>
-                <View style={[styles.entryCard, {borderBottomColor: colors.border}]}>
-                  <View style={styles.entryLeft}>
+                <View style={[styles.entryCard, {borderBottomColor: colors.border, backgroundColor: colors.card}]}>
+                  <View style={[styles.entryLeft, {backgroundColor: 'rgba(255,255,255,0.9)'}]}>
                     <Text style={styles.entryEmoji}>
                       {getEntryIcon(entry)}
                     </Text>
                   </View>
-                  <View style={styles.entryRight}>
+                <View style={styles.entryRight}>
                     <Text style={[styles.entryText, {color: colors.text, fontSize: fontSize(13)}]}
                       numberOfLines={1}>
                       {entry.summary || entry.text}
@@ -610,31 +547,45 @@ export default function HomeScreen() {
             ))
           )}
         </View>
+        {/* ── LiVars 슬라이더 ── */}
+        <LivarsSection
+          entries={entries}
+          colors={colors}
+          fontSize={fontSize}
+          wakeTime={settings.wakeTime || '07:00'}
+          caffeineSensitivity={settings.caffeineSensitivity || 'medium'} 
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
+  container: {flex: 1},
   inner: {paddingBottom: 40},
-  header: {padding: 24, paddingTop: 60},
-  month: {fontSize: 14, color: '#999', marginBottom: 4},
-  title: {fontSize: 22, fontWeight: '600', color: '#1a1a1a'},
+  header: {padding: 20, paddingTop: 24},
+  month: {fontSize: 14, color: '#475569', marginBottom: 4},
+  title: {fontSize: 22, fontWeight: '700', color: '#0f172a'},
   statsRow: {
     flexDirection: 'row',
     paddingHorizontal: 24,
-    gap: 10,
+    gap: 12,
+    marginTop: 8,
     marginBottom: 16,
   },
   statBox: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
+    // frosted shadow
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  statVal: {fontSize: 22, fontWeight: '500', color: '#1a1a1a'},
-  statLbl: {fontSize: 11, color: '#999', marginTop: 2},
+  statVal: {fontSize: 22, fontWeight: '600', color: '#0f172a'},
+  statLbl: {fontSize: 11, color: '#475569', marginTop: 4},
   inputSection: {paddingHorizontal: 24, marginBottom: 16},
   sectionTitle: {
     fontSize: 13,
@@ -645,15 +596,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   input: {
-    borderWidth: 0.5,
-    borderColor: '#ddd',
-    borderRadius: 12,
+    borderWidth: 0,
+    borderRadius: 14,
     padding: 14,
     fontSize: 14,
-    color: '#1a1a1a',
+    color: '#0f172a',
     minHeight: 100,
     textAlignVertical: 'top',
     marginBottom: 10,
+    // slight inner shadow look is achieved by background via inline
   },
   attachRow: {
     flexDirection: 'row',
@@ -665,64 +616,72 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 10,
-    gap: 4,
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.85)'
   },
   attachText: {
     fontSize: 13,
     color: '#666',
   },
   submitBtn: {
-    backgroundColor: '#BA7517',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 3,
   },
-  submitText: {color: '#fff', fontSize: 14, fontWeight: '500'},
+  submitText: {color: '#fff', fontSize: 14, fontWeight: '600'},
   resultBox: {
-    backgroundColor: '#FAEEDA',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
     marginBottom: 10,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
   resultTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#854F0B',
+    color: '#0f172a',
     marginBottom: 8,
   },
-  resultText: {fontSize: 13, color: '#412402', marginBottom: 4},
+  resultText: {fontSize: 13, color: '#0f172a', marginBottom: 4},
   snapRow: {flexDirection: 'row', gap: 8, marginTop: 10},
   confirmBtn: {
     flex: 1,
-    backgroundColor: '#EAF3DE',
     borderRadius: 100,
     padding: 10,
     alignItems: 'center',
   },
-  confirmText: {color: '#3B6D11', fontWeight: '500'},
+  confirmText: {color: '#2563EB', fontWeight: '600'},
   rejectBtn: {
     flex: 1,
-    backgroundColor: '#FCEBEB',
     borderRadius: 100,
     padding: 10,
     alignItems: 'center',
+    backgroundColor: 'rgba(255,59,48,0.06)'
   },
-  rejectText: {color: '#A32D2D', fontWeight: '500'},
+  rejectText: {color: '#A32D2D', fontWeight: '600'},
   section: {paddingHorizontal: 24, marginBottom: 16},
   badge: {color: '#BA7517', fontSize: 11},
   reviewCard: {
-    backgroundColor: '#FAEEDA',
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
-  reviewText: {flex: 1, fontSize: 13, color: '#412402'},
+  reviewText: {flex: 1, fontSize: 13, color: '#0f172a'},
   reviewBtns: {flexDirection: 'row', gap: 6},
   reviewConfirm: {
     backgroundColor: '#EAF3DE',
@@ -745,25 +704,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#f0f0f0',
     gap: 10,
+    borderRadius: 12,
+    marginBottom: 8,
   },
   entryLeft: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#f5f5f5',
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
   },
   entryEmoji: {fontSize: 18},
   entryRight: {flex: 1},
-  entryText: {fontSize: 13, color: '#1a1a1a'},
-  entryMeta: {fontSize: 11, color: '#aaa', marginTop: 2},
-  emptyText: {fontSize: 13, color: '#aaa', textAlign: 'center', marginTop: 20},
+  entryText: {fontSize: 13, color: '#0f172a'},
+  entryMeta: {fontSize: 11, color: '#475569', marginTop: 2},
+  emptyText: {fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 20},
   greetingSub: {
     fontSize: 14,
-    color: '#999',
+    color: '#475569',
     marginTop: 4,
   },
   deleteAction: {
@@ -776,4 +739,46 @@ const styles = StyleSheet.create({
   },
   deleteActionText: {fontSize: 20},
   deleteActionLabel: {fontSize: 11, color: '#A32D2D', marginTop: 2},
+  livarsSection: {
+  paddingHorizontal: 16,
+  paddingTop: 20,
+  paddingBottom: 8,
+  },
+  livarsSectionTitle: {
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 10,
+  },
+  livarsScroll: {
+    paddingBottom: 4,
+    gap: 10,
+  },
+  livarsCard: {
+    width: 120,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    alignItems: 'center',
+    gap: 4,
+  },
+  livarsCardEmoji: {
+    fontSize: 26,
+    marginBottom: 2,
+  },
+  livarsCardTitle: {
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  livarsCardSub: {
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  livarsCardValue: {
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  livarsCardHint: {
+    textAlign: 'center',
+    opacity: 0.7,
+  },
 });

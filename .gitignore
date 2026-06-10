@@ -96,4 +96,12 @@ android/.gradle/
 # 로그
 *.log
 *.orig
-pnpm-debug.log*
+pnpm-debug.log**.gguf
+*.bin
+docker/
+server/node_modules/
+server/.env
+ml/__pycache__/
+ml/model_gguf/
+ml/model_gguf_gguf/
+ml/outputs/

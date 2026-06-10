@@ -61,13 +61,16 @@ export const SettingsProvider = ({children}: {children: React.ReactNode}) => {
     primary: '#FAC775',
     inputBg: '#2a2a2a',
   } : {
-    background: '#ffffff',
-    card: '#f9f9f9',
-    text: '#1a1a1a',
-    subText: '#999999',
-    border: '#e0e0e0',
-    primary: '#BA7517',
-    inputBg: '#f5f5f5',
+    // Light mode — Ice blue background, cobalt primary, frosted cards
+    background: '#EFF6FF', // ice blue
+    card: 'rgba(255,255,255,0.75)', // frosted glass look (semi-transparent)
+    text: '#0f172a', // slate-900 (dark, calm)
+    subText: '#475569', // slate-600
+    border: 'rgba(15,23,42,0.06)',
+    primary: '#1E40AF', // muted cobalt / indigo (softer)
+    inputBg: 'rgba(255,255,255,0.8)',
+    gradientStart: '#1E40AF',
+    gradientEnd: '#4F46E5',
   };
 
   return (

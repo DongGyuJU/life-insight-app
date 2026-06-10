@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		7C09D64B2FD9840000581917 /* lifelog_qwen_1.5b.gguf in Resources */ = {isa = PBXBuildFile; fileRef = 7C09D64A2FD9840000581917 /* lifelog_qwen_1.5b.gguf */; };
+		7C1F6CE72FC6AF8800DB2DEE /* LifeLogAIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C1F6CE62FC6AF8800DB2DEE /* LifeLogAIManager.swift */; };
+		7C1F6CE92FC6AFC500DB2DEE /* LifeLogAIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C1F6CE82FC6AFC500DB2DEE /* LifeLogAIManager.m */; };
+		7C1F6CF72FC6E2AE00DB2DEE /* LifeLogUpdatable.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 7C1F6CF62FC6E2AE00DB2DEE /* LifeLogUpdatable.mlmodel */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		B76A4B80B60C7ED5F9756C7A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		FCD72B7D0540F4B97056377A /* libPods-LifeInsight.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F46C2107B0E7B901416FE570 /* libPods-LifeInsight.a */; };
@@ -21,6 +25,11 @@
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = LifeInsight/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1495D8A0C7C78992068A06A2 /* Pods-LifeInsight.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LifeInsight.release.xcconfig"; path = "Target Support Files/Pods-LifeInsight/Pods-LifeInsight.release.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = LifeInsight/AppDelegate.swift; sourceTree = "<group>"; };
+		7C09D6292FD7B7DE00581917 /* LifeInsight.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = LifeInsight.entitlements; path = LifeInsight/LifeInsight.entitlements; sourceTree = "<group>"; };
+		7C09D64A2FD9840000581917 /* lifelog_qwen_1.5b.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = lifelog_qwen_1.5b.gguf; sourceTree = "<group>"; };
+		7C1F6CE62FC6AF8800DB2DEE /* LifeLogAIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifeLogAIManager.swift; sourceTree = "<group>"; };
+		7C1F6CE82FC6AFC500DB2DEE /* LifeLogAIManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LifeLogAIManager.m; sourceTree = "<group>"; };
+		7C1F6CF62FC6E2AE00DB2DEE /* LifeLogUpdatable.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = LifeLogUpdatable.mlmodel; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = LifeInsight/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F003587B852655A0F4F324EE /* Pods-LifeInsight.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LifeInsight.debug.xcconfig"; path = "Target Support Files/Pods-LifeInsight/Pods-LifeInsight.debug.xcconfig"; sourceTree = "<group>"; };
@@ -42,11 +51,16 @@
 		13B07FAE1A68108700A75B9A /* LifeInsight */ = {
 			isa = PBXGroup;
 			children = (
+				7C09D6292FD7B7DE00581917 /* LifeInsight.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
+				7C09D64A2FD9840000581917 /* lifelog_qwen_1.5b.gguf */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				7C1F6CE62FC6AF8800DB2DEE /* LifeLogAIManager.swift */,
+				7C1F6CE82FC6AFC500DB2DEE /* LifeLogAIManager.m */,
+				7C1F6CF62FC6E2AE00DB2DEE /* LifeLogUpdatable.mlmodel */,
 			);
 			name = LifeInsight;
 			sourceTree = "<group>";
@@ -106,9 +120,9 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "LifeInsight" */;
 			buildPhases = (
 				240BE5265BE29D4ACE8F438E /* [CP] Check Pods Manifest.lock */,
-				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				13B07F871A680F5B00A75B9A /* Sources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				EF37A87270C0BF7F566DD3F0 /* [CP] Embed Pods Frameworks */,
 				E5BE2D5BD500C7AB299E75BF /* [CP] Copy Pods Resources */,
@@ -131,7 +145,7 @@
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						LastSwiftMigration = 1120;
+						LastSwiftMigration = 2650;
 					};
 				};
 			};
@@ -160,6 +174,7 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				7C09D64B2FD9840000581917 /* lifelog_qwen_1.5b.gguf in Resources */,
 				B76A4B80B60C7ED5F9756C7A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -254,6 +269,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7C1F6CF72FC6E2AE00DB2DEE /* LifeLogUpdatable.mlmodel in Sources */,
+				7C1F6CE92FC6AFC500DB2DEE /* LifeLogAIManager.m in Sources */,
+				7C1F6CE72FC6AF8800DB2DEE /* LifeLogAIManager.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -267,6 +285,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = LifeInsight/LifeInsight.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YVQZFPP37G;
 				ENABLE_BITCODE = NO;
@@ -285,6 +304,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dkju.lifeinsight;
 				PRODUCT_NAME = LifeInsight;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -298,6 +318,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = LifeInsight/LifeInsight.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YVQZFPP37G;
 				INFOPLIST_FILE = LifeInsight/Info.plist;
@@ -315,6 +336,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dkju.lifeinsight;
 				PRODUCT_NAME = LifeInsight;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";

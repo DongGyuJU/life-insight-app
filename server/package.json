@@ -1,0 +1,12 @@
+{
+  "name": "liin-server",
+  "version": "1.0.0",
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "dotenv": "^16.0.0",
+    "fastify": "^4.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}

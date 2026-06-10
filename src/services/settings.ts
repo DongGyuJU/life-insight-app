@@ -21,6 +21,8 @@ export interface AppSettings {
   notificationEnabled: boolean;
   notificationTime: 'day_before' | 'morning' | 'both';
   reportPeriod: 'week' | 'month';
+  wakeTime: string;           // "07:00"
+  caffeineSensitivity: 'low' | 'medium' | 'high';
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -42,6 +44,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   notificationEnabled: false,
   notificationTime: 'morning',
   reportPeriod: 'month',
+  wakeTime: '07:00',
+  caffeineSensitivity: 'medium',
 };
 
 const SETTINGS_KEY = 'app_settings';

@@ -11,10 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import {useSettings} from '../services/SettingsContext';
 import {saveEntry} from '../database/db';
 import {analyzeText} from '../services/api';
+import { syncPendingEntries } from '../services/syncService';
 
 export default function RecordScreen() {
+  const {colors, fontSize} = useSettings();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -35,6 +38,7 @@ export default function RecordScreen() {
       } else {
         // 서버 연결 실패 시 분류 없이 저장
         await saveEntry({text});
+        syncPendingEntries();
         Alert.alert('저장 완료', '서버 연결 없이 저장됐어요.');
         setText('');
       }
@@ -55,6 +59,7 @@ export default function RecordScreen() {
       appointment_date: result.appointment_date,
       summary: result.summary,
     });
+    syncPendingEntries();
     Alert.alert('저장 완료', '기록이 저장됐어요!');
     setText('');
     setResult(null);
@@ -69,13 +74,13 @@ export default function RecordScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.inner}>
-        <Text style={styles.title}>새 기록</Text>
-        <Text style={styles.sub}>형식 없이 — AI가 알아서 분류해드려요</Text>
+        <Text style={[styles.title, {color: colors.text, fontSize: fontSize(20)}]}>새 기록</Text>
+        <Text style={[styles.sub, {color: colors.subText, fontSize: fontSize(13)}]}>형식 없이 — AI가 알아서 분류해드려요</Text>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, {backgroundColor: '#FFFFFF', borderColor: colors.border}]}
           placeholder="오늘 있었던 일, 지출, 약속, 느낀 것..."
-          placeholderTextColor="#aaa"
+          placeholderTextColor={colors.subText}
           multiline
           value={text}
           onChangeText={setText}
@@ -83,7 +88,7 @@ export default function RecordScreen() {
 
         {/* AI 분석 결과 스냅 리뷰 */}
         {result && (
-          <View style={styles.resultBox}>
+            <View style={[styles.resultBox, {backgroundColor: colors.card}] }>
             <Text style={styles.resultTitle}>AI 분석 결과</Text>
             <Text style={styles.resultText}>
               카테고리: {result.categories?.join(', ')}
@@ -121,8 +126,8 @@ export default function RecordScreen() {
 
         {/* 제출 버튼 */}
         {!result && (
-          <TouchableOpacity
-            style={styles.submitBtn}
+            <TouchableOpacity
+            style={[styles.submitBtn, {backgroundColor: colors.primary}]}
             onPress={handleSubmit}
             disabled={loading}>
             {loading ? (
@@ -139,7 +144,7 @@ export default function RecordScreen() {
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#fff'},
-  inner: {padding: 24, paddingTop: 60},
+  inner: {padding: 24, paddingTop: 24},
   title: {fontSize: 20, fontWeight: '600', color: '#1a1a1a', marginBottom: 4},
   sub: {fontSize: 13, color: '#999', marginBottom: 20},
   input: {

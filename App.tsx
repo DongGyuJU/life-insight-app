@@ -1,50 +1,5 @@
-// /**
-//  * Sample React Native App
-//  * https://github.com/facebook/react-native
-//  *
-//  * @format
-//  */
-
-// import { NewAppScreen } from '@react-native/new-app-screen';
-// import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-// import {
-//   SafeAreaProvider,
-//   useSafeAreaInsets,
-// } from 'react-native-safe-area-context';
-
-// function App() {
-//   const isDarkMode = useColorScheme() === 'dark';
-
-//   return (
-//     <SafeAreaProvider>
-//       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-//       <AppContent />
-//     </SafeAreaProvider>
-//   );
-// }
-
-// function AppContent() {
-//   const safeAreaInsets = useSafeAreaInsets();
-
-//   return (
-//     <View style={styles.container}>
-//       <NewAppScreen
-//         templateFileName="App.tsx"
-//         safeAreaInsets={safeAreaInsets}
-//       />
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//   },
-// });
-// export default App;
-
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react'; // ← useEffect 추가
 import {Text} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -57,9 +12,20 @@ import CalendarScreen from './src/screens/CalendarScreen';
 import ReportScreen from './src/screens/ReportScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { LogBox } from 'react-native';
+import { initUser, registerAutoSync } from './src/services/syncService';
+
+
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+
+  // ↓ 이 블록만 추가
+  useEffect(() => {
+    initUser();
+    const cleanup = registerAutoSync();
+    return cleanup;
+  }, []);
+
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <SettingsProvider>
@@ -79,7 +45,7 @@ export default function App() {
                 tabBarIcon: ({size}) => {
                   const icons: Record<string, string> = {
                     홈: '🏠',
-                    분류: '📊',
+                    분류: '📊',   
                     캘린더: '📅',
                     리포트: '📋',
                     설정: '⚙️',

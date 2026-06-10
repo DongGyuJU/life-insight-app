@@ -1,6 +1,7 @@
 import {useSettings} from '../services/SettingsContext';
 import React, {useState, useCallback} from 'react';
 import {
+  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -140,7 +141,8 @@ export default function CalendarScreen() {
   const days = ['일', '월', '화', '수', '목', '금', '토'];
 
   return (
-    <ScrollView style={[styles.container, {backgroundColor: colors.background}]}>
+    <SafeAreaView style={[styles.safeArea, {backgroundColor: colors.background}]}> 
+      <ScrollView style={[styles.container, {backgroundColor: colors.background}]}>
       {/* 헤더 + 월 이동 */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.arrowBtn} onPress={goPrevMonth}>
@@ -158,7 +160,7 @@ export default function CalendarScreen() {
       <View style={[styles.calendarBox, {backgroundColor: colors.card}]}>
         <View style={styles.dayRow}>
           {days.map(d => (
-            <Text key={d} style={[styles.dayHead, {color: colors.subText}, d === '일' && {color: '#E53E3E'}]}>
+            <Text key={d} style={[styles.dayHead, {color: colors.subText, fontSize: fontSize(11)}, d === '일' && {color: '#E53E3E'}]}>
               {d}
             </Text>
           ))}
@@ -186,7 +188,8 @@ export default function CalendarScreen() {
                 onPress={() => setSelectedDate(dateStr === selectedDate ? null : dateStr)}>
                 <Text
                   style={[
-                    styles.dayText, {color: colors.text},
+                      styles.dayText,
+                      {color: colors.text, fontSize: fontSize(13)},
                     isToday && styles.todayText,
                     isSelected && !isToday && styles.selectedText,
                     new Date(viewYear, viewMonth, day).getDay() === 0 && styles.sundayText,
@@ -219,28 +222,28 @@ export default function CalendarScreen() {
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.dot, {backgroundColor: '#BA7517'}]} />
-          <Text style={styles.legendText}>지출</Text>
+          <Text style={[styles.legendText, {fontSize: fontSize(11), color: colors.subText}]}>지출</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, {backgroundColor: '#185FA5'}]} />
-          <Text style={styles.legendText}>약속</Text>
+          <Text style={[styles.legendText, {fontSize: fontSize(11), color: colors.subText}]}>약속</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, {backgroundColor: '#3B6D11'}]} />
-          <Text style={styles.legendText}>감정</Text>
+          <Text style={[styles.legendText, {fontSize: fontSize(11), color: colors.subText}]}>감정</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, {backgroundColor: '#6B46C1'}]} />
-          <Text style={styles.legendText}>업무</Text>
+          <Text style={[styles.legendText, {fontSize: fontSize(11), color: colors.subText}]}>업무</Text>
         </View>
       </View>
 
       {/* 선택된 날짜 기록 */}
       {selectedDate && (
         <View style={[styles.selectedSection, {backgroundColor: colors.card}]}>
-          <Text style={styles.selectedDateTitle}>{selectedDate}</Text>
+          <Text style={[styles.selectedDateTitle, {fontSize: fontSize(15), color: colors.text}]}>{selectedDate}</Text>
           {selectedEntries.length === 0 ? (
-            <Text style={styles.emptyText}>이 날의 기록이 없어요.</Text>
+            <Text style={[styles.emptyText, {fontSize: fontSize(13), color: colors.subText}]}>이 날의 기록이 없어요.</Text>
           ) : (
             selectedEntries.map(entry => (
               <View key={entry.id} style={styles.entryCard}>
@@ -248,17 +251,17 @@ export default function CalendarScreen() {
                   {entry.emotion ? getEmotionEmoji(entry.emotion) : '📝'}
                 </Text>
                 <View style={styles.entryRight}>
-                  <Text style={styles.entryText}>
+                  <Text style={[styles.entryText, {fontSize: fontSize(13), color: colors.text}]}> 
                     {entry.summary || entry.text}
                   </Text>
                   <View style={styles.tagRow}>
                     {entry.sub_category ? (
                       <View style={styles.tag}>
-                        <Text style={styles.tagText}>{entry.sub_category}</Text>
+                        <Text style={[styles.tagText, {fontSize: fontSize(10)}]}>{entry.sub_category}</Text>
                       </View>
                     ) : null}
                     {entry.amount ? (
-                      <Text style={styles.entryAmount}>
+                      <Text style={[styles.entryAmount, {fontSize: fontSize(12), color: colors.primary}]}> 
                         ₩{entry.amount.toLocaleString()}
                       </Text>
                     ) : null}
@@ -271,18 +274,20 @@ export default function CalendarScreen() {
       )}
 
       <View style={{height: 40}} />
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {flex: 1},
   container: {flex: 1, backgroundColor: '#fff'},
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 24,
     paddingBottom: 16,
   },
   arrowBtn: {

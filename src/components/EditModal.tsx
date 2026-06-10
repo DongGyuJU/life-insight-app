@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import {useSettings} from '../services/SettingsContext';
 import {updateEntry, deleteEntry} from '../database/db';
 
 interface EditModalProps {
@@ -37,6 +38,7 @@ const SUB_CATEGORY_OPTIONS: Record<string, string[]> = {
 };
 
 export default function EditModal({entry, visible, onClose, onSave}: EditModalProps) {
+  const {colors} = useSettings();
   const [text, setText] = useState('');
   const [emotion, setEmotion] = useState('');
   const [subCategory, setSubCategory] = useState('');
@@ -120,7 +122,7 @@ export default function EditModal({entry, visible, onClose, onSave}: EditModalPr
       animationType="slide"
       onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.container}>
+        <View style={[styles.container, {backgroundColor: colors.card}] }>
           {/* 헤더 */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose}>

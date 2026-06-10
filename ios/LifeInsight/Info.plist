@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.lifeinsight.mlupdate</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -35,12 +39,20 @@
 	<string>영수증과 메모를 사진으로 기록할 수 있어요</string>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>PDF 리포트를 저장합니다</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>걸음 수와 활동 데이터를 읽어 활동량 카드에 표시합니다.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>운동 기록을 건강 앱에 저장합니다.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>갤러리에서 사진을 선택할 수 있어요</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>processing</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string></string>
 	<key>UIRequiredDeviceCapabilities</key>
