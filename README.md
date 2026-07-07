@@ -194,6 +194,14 @@ Medical diagnosis ← Symptom / test / treatment Category
 - Spivak (2010) *Functorial Data Migration*
 - Mishra (2025) *Composing the Mind of a Machine: Agentic AI Through the Lens of Category Theory*
 
+
+## 🔗 Framework
+
+
+The Domain AI / Meta AI architecture described above is generalized into a standalone, domain-agnostic library:
+
+**[cql-native-ai](https://github.com/DongGyuJU/cql-native-ai)** — usable in any multi-agent setting (company networks, urban planning, etc.), not just life-logging. LiIn's `server/src/routes/domain.js` and `meta.js` are a direct application of this library's `DomainAgent` / `MetaAgent` / `DomainRegistry`.
+
 ---
 
 ## ✅ Implemented Features
